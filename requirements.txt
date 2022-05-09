@@ -1,0 +1,4 @@
+numpy
+matplotlib
+
+git+https://github.com/seblee97/run_modes.git
