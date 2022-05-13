@@ -25,17 +25,51 @@ class ConfigTemplate:
         dependent_variables_required_values=[[constants.CONSTANT]],
     )
 
+    _modulate_mean_of_std_lr_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.FACTOR,
+                types=[int, float],
+            )
+        ],
+        level=[constants.LEARNING_RATE, constants.MODULATE],
+        dependent_variables=[constants.LR_TYPE],
+        dependent_variables_required_values=[
+            [
+                constants.ACTION_MEAN_OF_STD,
+                constants.MEAN_MEAN_OF_STD,
+                constants.MEAN_STD_OF_MEAN,
+            ]
+        ],
+    )
+
     _learning_rate_template = config_template.Template(
         fields=[
             config_field.Field(
                 name=constants.TYPE,
                 key=constants.LR_TYPE,
                 types=[str],
-                requirements=[lambda x: x in [constants.CONSTANT]],
-            )
+                requirements=[
+                    lambda x: x
+                    in [
+                        constants.CONSTANT,
+                        constants.ACTION_MEAN_OF_STD,
+                        constants.MEAN_MEAN_OF_STD,
+                        constants.MEAN_STD_OF_MEAN,
+                    ]
+                ],
+            ),
+            config_field.Field(
+                name=constants.DEFAULT_LR,
+                types=[int, float],
+                requirements=[lambda x: x > 0],
+            ),
         ],
         level=[constants.LEARNING_RATE],
-        nested_templates=[_constant_lr_template],
+        nested_templates=[
+            _constant_lr_template,
+            _modulate_mean_of_std_lr_template,
+        ],
     )
 
     _constant_eps_template = config_template.Template(
@@ -58,8 +92,15 @@ class ConfigTemplate:
                 name=constants.TYPE,
                 key=constants.EPS_TYPE,
                 types=[str],
-                requirements=[lambda x: x in [constants.CONSTANT]],
-            )
+                requirements=[
+                    lambda x: x in [constants.CONSTANT, constants.MAX_STD_OF_MEAN]
+                ],
+            ),
+            config_field.Field(
+                name=constants.DEFAULT_EPS,
+                types=[int, float],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
         ],
         level=[constants.EPSILON],
         nested_templates=[_constant_eps_template],
