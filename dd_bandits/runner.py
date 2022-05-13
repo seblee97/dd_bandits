@@ -102,12 +102,12 @@ class Runner(base_runner.BaseRunner):
         elif config.eps_type == constants.MAX_STD_OF_MEAN:
 
             def eps_fn():
-                return np.max(self._latest_std_of_mean)
+                return np.min([1, np.max(self._latest_std_of_mean)])
 
         elif config.eps_type == constants.MEAN_STD_OF_MEAN:
 
             def eps_fn():
-                return np.mean(self._latest_std_of_mean)
+                return np.min([1, np.mean(self._latest_std_of_mean)])
 
         return eps_fn
 
