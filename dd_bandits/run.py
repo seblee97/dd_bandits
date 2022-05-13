@@ -27,7 +27,7 @@ parser.add_argument("--timeout", type=str, default="")
 parser.add_argument("--cluster_debug", action="store_true")
 
 STOCHASTIC_PACKAGES = ["numpy", "random"]
-RUN_METHODS = ["train"]
+RUN_METHODS = ["train", "post_process"]
 
 
 if __name__ == "__main__":
