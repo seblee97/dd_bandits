@@ -20,6 +20,11 @@ class Runner(base_runner.BaseRunner):
         self._n_arms = config.n_arms
         self._p_bootstrap = config.p_bootstrap
         self._batch_size = config.batch_size
+        self._default_lr = config.default_lr
+        self._default_epsilon = config.default_eps
+
+        self._latest_std_of_mean = np.zeros(self._n_arms)
+        self._latest_mean_of_std = np.zeros(self._n_arms)
 
         self._step_count: int
         self._data_index: int
@@ -65,6 +70,10 @@ class Runner(base_runner.BaseRunner):
             data_column_names.append(f"{constants.AVERAGE_KL_DIV}_{n_arm}")
             data_column_names.append(f"{constants.MAX_KL_DIV}_{n_arm}")
             data_column_names.append(f"{constants.INFORMATION_RADIUS}_{n_arm}")
+            data_column_names.append(f"{constants.MEAN_OF_STD}_{n_arm}")
+            data_column_names.append(f"{constants.MEAN_OF_MEAN}_{n_arm}")
+            data_column_names.append(f"{constants.STD_OF_STD}_{n_arm}")
+            data_column_names.append(f"{constants.STD_OF_MEAN}_{n_arm}")
 
         for (n_arm, e) in itertools.product(
             range(self._n_arms), range(self._n_ensemble)
@@ -90,13 +99,47 @@ class Runner(base_runner.BaseRunner):
             def eps_fn():
                 return config.eps_value
 
+        elif config.eps_type == constants.MAX_STD_OF_MEAN:
+
+            def eps_fn():
+                return np.max(self._latest_std_of_mean)
+
+        elif config.eps_type == constants.MEAN_STD_OF_MEAN:
+
+            def eps_fn():
+                return np.mean(self._latest_std_of_mean)
+
         return eps_fn
 
     def _setup_lr_computer(self, config):
         if config.lr_type == constants.CONSTANT:
 
-            def lr_fn():
+            def lr_fn(action: int):
                 return config.lr_value
+
+        elif config.lr_type == constants.ACTION_MEAN_OF_STD:
+
+            def lr_fn(action: int):
+                lr = config.factor * self._latest_mean_of_std[action]
+                if lr == 0:
+                    lr = self._default_lr
+                return lr
+
+        elif config.lr_type == constants.MEAN_MEAN_OF_STD:
+
+            def lr_fn(action: int):
+                lr = config.factor * np.mean(self._latest_mean_of_std)
+                if lr == 0:
+                    lr = self._default_lr
+                return lr
+
+        elif config.lr_type == constants.MEAN_STD_OF_MEAN:
+
+            def lr_fn(action: int):
+                lr = config.factor * np.mean(self._latest_std_of_mean)
+                if lr == 0:
+                    lr = self._default_lr
+                return lr
 
         return lr_fn
 
@@ -161,7 +204,7 @@ class Runner(base_runner.BaseRunner):
         if len(sampled_ind) == 0:
             sampled_ind = [np.random.randint(self._n_ensemble)]
 
-        learning_rate = self._lr_computer()
+        learning_rate = self._lr_computer(action=action)
 
         samples = self._estimator_group[action].update_subset(
             indices=sampled_ind,
@@ -208,6 +251,28 @@ class Runner(base_runner.BaseRunner):
                 self._estimator_group[n_arm].group_means,
                 self._estimator_group[n_arm].group_stds,
             )
+
+            mean_of_std = np.mean(self._estimator_group[n_arm].group_stds)
+            mean_of_mean = np.mean(self._estimator_group[n_arm].group_means)
+            std_of_std = np.std(self._estimator_group[n_arm].group_stds)
+            std_of_mean = np.std(self._estimator_group[n_arm].group_means)
+
+            self._data_columns[f"{constants.MEAN_OF_STD}_{n_arm}"][
+                self._data_index
+            ] = mean_of_std
+            self._latest_mean_of_std[n_arm] = mean_of_std
+
+            self._data_columns[f"{constants.MEAN_OF_MEAN}_{n_arm}"][
+                self._data_index
+            ] = mean_of_mean
+            self._data_columns[f"{constants.STD_OF_STD}_{n_arm}"][
+                self._data_index
+            ] = std_of_std
+
+            self._data_columns[f"{constants.STD_OF_MEAN}_{n_arm}"][
+                self._data_index
+            ] = std_of_mean
+            self._latest_std_of_mean[n_arm] = std_of_mean
 
             for e, (e_mean, e_std) in enumerate(
                 zip(
