@@ -82,9 +82,7 @@ class ConfigTemplate:
                 config_field.Field(
                     name=constants.DISTRIBUTION_MEAN_RANGE, types=[list]
                 ),
-                config_field.Field(
-                    name=constants.DISTRIBUTION_SCALE_RANGE, types=[list]
-                ),
+                config_field.Field(name=constants.DISTRIBUTION_STD_RANGE, types=[list]),
             ],
             nested_templates=[self._learning_rate_template, self._epsilon_template],
         )
