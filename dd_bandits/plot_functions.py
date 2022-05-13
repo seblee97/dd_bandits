@@ -7,6 +7,38 @@ import pandas as pd
 from dd_bandits import constants
 
 
+def epsilon_plot(df: pd.DataFrame, save_folder: str):
+
+    epsilon = df[constants.EPSILON]
+    fig = plt.figure()
+    epsilon.plot()
+    plt.ylabel("Epsilon")
+    plt.xlabel("Timestep")
+    fig.savefig(os.path.join(save_folder, constants.EPSILON_PLOT_PDF))
+
+
+def lr_plot(df: pd.DataFrame, save_folder: str):
+
+    epsilon = df[constants.LEARNING_RATE]
+    fig = plt.figure()
+    epsilon.plot()
+    plt.ylabel("Learning Rate")
+    plt.xlabel("Timestep")
+    fig.savefig(os.path.join(save_folder, constants.LR_PLOT_PDF))
+
+
+def regret_plot(df: pd.DataFrame, save_folder: str):
+
+    optimal_reward = np.array(df[constants.MEAN_OPTIMAL_REWARD])
+    actual_reward = np.array(df[constants.REWARD])
+
+    fig = plt.figure()
+    plt.plot(np.cumsum(optimal_reward) - np.cumsum(actual_reward))
+    plt.ylabel("Regret")
+    plt.xlabel("Timestep")
+    fig.savefig(os.path.join(save_folder, constants.REGRET_PLOT_PDF))
+
+
 def uncertainty_plots(
     n_arms: int,
     n_episodes: int,
