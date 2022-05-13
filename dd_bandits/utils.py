@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 
@@ -19,6 +19,9 @@ class Estimator:
         return self._std_estimate
 
     def update(self, new_sample, learning_rate):
+        # import pdb
+
+        # pdb.set_trace()
         delta = new_sample - self._mean_estimate
         self._mean_estimate += learning_rate * delta.mean()
 
@@ -30,7 +33,13 @@ class Estimator:
 class EstimatorGroup:
     def __init__(self, total_num_estimators: int):
         self._total_num_estimators = total_num_estimators
-        self._estimators = [Estimator() for _ in range(total_num_estimators)]
+        self._estimators = [
+            Estimator(np.random.normal()) for _ in range(total_num_estimators)
+        ]
+
+        # import pdb
+
+        # pdb.set_trace()
 
         self._mean_diffs = []
 
@@ -42,6 +51,9 @@ class EstimatorGroup:
         distribution_std,
         learning_rate,
     ):
+        # import pdb
+
+        # pdb.set_trace()
 
         samples = np.random.normal(
             distribution_mean, distribution_std, size=(len(indices), num_samples)
@@ -62,6 +74,19 @@ class EstimatorGroup:
         mean_diff = np.mean(subset_means) - np.mean(non_subset_means)
         self._mean_diffs.append(mean_diff)
 
+        print(
+            "MEANS",
+            np.mean(self.group_means),
+            np.std(self.group_means),
+            np.var(self.group_means),
+        )
+        print(
+            "STD",
+            np.mean(self.group_stds),
+            np.std(self.group_stds),
+            np.var(self.group_stds),
+        )
+
         return samples
 
     @property
@@ -77,12 +102,12 @@ class EstimatorGroup:
         return self._mean_diffs
 
 
-def sample_mean(rng):
-    return rng.uniform(-5, 5)
+def sample_mean(rng, mean_range: List[Union[float, int]]):
+    return rng.uniform(mean_range[0], mean_range[1])
 
 
-def sample_scale(rng):
-    return rng.uniform(1e-3, 3)
+def sample_scale(rng, std_range: List[Union[float, int]]):
+    return rng.uniform(std_range[0], std_range[1])
 
 
 def kl_div(mu_1, mu_2, sigma_1, sigma_2):
