@@ -1,10 +1,11 @@
 import itertools
+import os
 from typing import Dict, List
 
 import numpy as np
 import pandas as pd
 import utils
-from dd_bandits import constants
+from dd_bandits import constants, plot_functions
 from run_modes import base_runner
 
 
@@ -26,13 +27,22 @@ class Runner(base_runner.BaseRunner):
 
         rng = np.random.RandomState(config.seed)
         self._means = [
-            [utils.sample_mean(rng) for _ in range(self._n_ensemble)]
+            [
+                utils.sample_mean(rng, config.distribution_mean_range)
+                for _ in range(self._n_arms)
+            ]
             for _ in range(self._n_episodes)
         ]
-        self._scales = [
-            [utils.sample_scale(rng) for _ in range(self._n_ensemble)]
+        self._stds = [
+            [
+                utils.sample_scale(rng, config.distribution_std_range)
+                for _ in range(self._n_arms)
+            ]
             for _ in range(self._n_episodes)
         ]
+
+        print("Means: ", self._means[0])
+        print("Stds: ", self._stds[0])
 
         self._epsilon_computer = self._setup_epsilon_computer(config=config)
         self._lr_computer = self._setup_lr_computer(config=config)
@@ -120,7 +130,9 @@ class Runner(base_runner.BaseRunner):
             self._logger.info(f"Beginning episode {episode}")
 
             means = self._means[episode]
-            scales = self._scales[episode]
+            stds = self._stds[episode]
+
+            print(means, stds)
 
             for trial_index in range(self._change_freq):
                 for n_arm in range(self._n_arms):
@@ -129,14 +141,14 @@ class Runner(base_runner.BaseRunner):
                     ] = means[n_arm]
                     self._data_columns[f"{constants.DISTRIBUTION_STD}_{n_arm}"][
                         self._data_index
-                    ] = np.sqrt(scales[n_arm])
-                self._trial(trial_index=trial_index, means=means, scales=scales)
+                    ] = stds[n_arm]
+                self._trial(trial_index=trial_index, means=means, stds=stds)
                 self._step_count += 1
                 self._data_index += 1
 
             self._checkpoint_data()
 
-    def _trial(self, trial_index: int, means: List[float], scales: List[float]):
+    def _trial(self, trial_index: int, means: List[float], stds: List[float]):
 
         epsilon = self._epsilon_computer()
 
@@ -161,7 +173,7 @@ class Runner(base_runner.BaseRunner):
             indices=sampled_ind,
             num_samples=self._batch_size,
             distribution_mean=means[action],
-            distribution_std=np.sqrt(scales[action]),
+            distribution_std=stds[action],
             learning_rate=learning_rate,
         )
 
@@ -214,4 +226,14 @@ class Runner(base_runner.BaseRunner):
                 ][self._data_index] = e_mean
                 self._data_columns[
                     f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-                ][self._data_index] = e_mean
+                ][self._data_index] = e_std
+
+    def post_process(self):
+        df = self._data_logger.load_data()
+        plot_functions.uncertainty_plots(
+            n_arms=self._n_arms,
+            n_episodes=self._n_episodes,
+            change_freq=self._change_freq,
+            df=df,
+            save_folder=self._checkpoint_path,
+        )
