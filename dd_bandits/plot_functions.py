@@ -53,7 +53,7 @@ def uncertainty_plots(
             label="mean std",
         )
         plt.plot(np.array(kl_average_df), zorder=5, lw=3, label="average KL")
-        # plt.plot(np.array(kl_max_df), zorder=5, lw=3, label="max KL")
+        plt.plot(np.array(kl_max_df), zorder=5, lw=3, label="max KL")
         plt.plot(
             np.array(ir_df),
             zorder=5,
