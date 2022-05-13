@@ -5,7 +5,7 @@ import numpy as np
 
 class Estimator:
     def __init__(
-        self, mean_init: Union[float, int] = 0, std_init: Union[float, int] = 0.01
+        self, mean_init: Union[float, int] = 0, std_init: Union[float, int] = 1
     ):
         self._mean_estimate = mean_init
         self._std_estimate = std_init
@@ -19,9 +19,7 @@ class Estimator:
         return self._std_estimate
 
     def update(self, new_sample, learning_rate):
-        # import pdb
-
-        # pdb.set_trace()
+        # print("PRE", self._std_estimate)
         delta = new_sample - self._mean_estimate
         self._mean_estimate += learning_rate * delta.mean()
 
@@ -33,13 +31,7 @@ class Estimator:
 class EstimatorGroup:
     def __init__(self, total_num_estimators: int):
         self._total_num_estimators = total_num_estimators
-        self._estimators = [
-            Estimator(np.random.normal()) for _ in range(total_num_estimators)
-        ]
-
-        # import pdb
-
-        # pdb.set_trace()
+        self._estimators = [Estimator() for _ in range(total_num_estimators)]
 
         self._mean_diffs = []
 
@@ -51,9 +43,6 @@ class EstimatorGroup:
         distribution_std,
         learning_rate,
     ):
-        # import pdb
-
-        # pdb.set_trace()
 
         samples = np.random.normal(
             distribution_mean, distribution_std, size=(len(indices), num_samples)
@@ -73,19 +62,6 @@ class EstimatorGroup:
 
         mean_diff = np.mean(subset_means) - np.mean(non_subset_means)
         self._mean_diffs.append(mean_diff)
-
-        print(
-            "MEANS",
-            np.mean(self.group_means),
-            np.std(self.group_means),
-            np.var(self.group_means),
-        )
-        print(
-            "STD",
-            np.mean(self.group_stds),
-            np.std(self.group_stds),
-            np.var(self.group_stds),
-        )
 
         return samples
 
