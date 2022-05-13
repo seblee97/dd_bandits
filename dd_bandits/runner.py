@@ -41,9 +41,6 @@ class Runner(base_runner.BaseRunner):
             for _ in range(self._n_episodes)
         ]
 
-        print("Means: ", self._means[0])
-        print("Stds: ", self._stds[0])
-
         self._epsilon_computer = self._setup_epsilon_computer(config=config)
         self._lr_computer = self._setup_lr_computer(config=config)
 
@@ -131,8 +128,6 @@ class Runner(base_runner.BaseRunner):
 
             means = self._means[episode]
             stds = self._stds[episode]
-
-            print(means, stds)
 
             for trial_index in range(self._change_freq):
                 for n_arm in range(self._n_arms):
