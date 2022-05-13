@@ -1,21 +1,30 @@
 n_arms: 8
 n_ensemble: 16
 p_bootstrap: 0.5
-change_freq: 5000
+change_freq: 10000
 batch_size: 64
 n_episodes: 2
 
 learning_rate:
-    type: constant
+
+    default_lr: 0.05 
+
+    type: mean_std_of_mean
 
     constant: 
         value: 0.05
 
+    modulate:
+        factor: 1
+
 epsilon:
-    type: constant
+
+    default_eps: 0.2
+
+    type: max_std_of_mean
 
     constant:
         value: 0.8
 
 distribution_mean_range: [-5, 5]
-distribution_std_range: [0.05, 2] 
+distribution_std_range: [0.03, 1.7]
