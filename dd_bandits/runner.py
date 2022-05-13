@@ -1,5 +1,4 @@
 import itertools
-import os
 from typing import Dict, List
 
 import numpy as np
@@ -232,3 +231,6 @@ class Runner(base_runner.BaseRunner):
             df=df,
             save_folder=self._checkpoint_path,
         )
+        plot_functions.epsilon_plot(df=df, save_folder=self._checkpoint_path)
+        plot_functions.lr_plot(df=df, save_folder=self._checkpoint_path)
+        plot_functions.regret_plot(df=df, save_folder=self._checkpoint_path)
