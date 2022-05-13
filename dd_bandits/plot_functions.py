@@ -29,10 +29,6 @@ def uncertainty_plots(
             f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{arm}_{constants.HEAD}_[0-9]"
         )
 
-        import pdb
-
-        pdb.set_trace()
-
         stds_df = df.filter(regex=(std_pattern))
         means_df = df.filter(regex=(mean_pattern))
         dist_df = df[f"{constants.DISTRIBUTION_STD}_{arm}"]
