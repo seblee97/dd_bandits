@@ -1,7 +1,7 @@
 n_arms: 8
 n_ensemble: 16
 p_bootstrap: 0.5
-change_freq: 2000
+change_freq: 5000
 batch_size: 64
 n_episodes: 2
 
@@ -15,7 +15,7 @@ epsilon:
     type: constant
 
     constant:
-        value: 0.2
+        value: 0.8
 
-distribution_mean_range: [-3, 3]
-distribution_scale_range: [-3, 3]
+distribution_mean_range: [-5, 5]
+distribution_std_range: [0.05, 2] 
