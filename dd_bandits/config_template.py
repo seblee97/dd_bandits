@@ -110,6 +110,7 @@ class ConfigTemplate:
     def base_template(self):
         return config_template.Template(
             fields=[
+                config_field.Field(name=constants.SEED, types=[int]),
                 config_field.Field(name=constants.N_ARMS, types=[int]),
                 config_field.Field(name=constants.N_ENSEMBLE, types=[int]),
                 config_field.Field(
