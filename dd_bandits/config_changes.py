@@ -10,7 +10,7 @@ eps_types = ["max_std_of_mean"]
 ADAPTIVE_CONFIG_CHANGES = {
     f"lr_{lr_type}_{modulation}_eps_{eps_type}": [
         {
-            "learning_rate": {"type": lr_type, "modulate": modulation},
+            "learning_rate": {"type": lr_type, "modulate": {"factor": modulation}},
             "epsilon": {"type": eps_type},
         }
     ]
@@ -22,7 +22,7 @@ ADAPTIVE_CONFIG_CHANGES = {
 CONSTANT_LR_CONFIG_CHANGES = {
     f"lr_constant_{value}_eps_{eps_type}": [
         {
-            "learning_rate": {"type": "constant", "value": value},
+            "learning_rate": {"type": "constant", "constant": {"value": value}},
             "epsilon": {"type": eps_type},
         }
     ]
@@ -32,8 +32,8 @@ CONSTANT_LR_CONFIG_CHANGES = {
 CONSTANT_EPS_CONFIG_CHANGES = {
     f"lr_{lr_type}_{modulation}_eps_constant_{value}": [
         {
-            "learning_rate": {"type": lr_type, "modulate": modulation},
-            "epsilon": {"type": "constant", "value": value},
+            "learning_rate": {"type": lr_type, "modulate": {"factor": modulation}},
+            "epsilon": {"type": "constant", "constant": {"value": value}},
         }
     ]
     for lr_type, modulation, value in itertools.product(
@@ -44,8 +44,8 @@ CONSTANT_EPS_CONFIG_CHANGES = {
 CONSTANT_CONFIG_CHANGES = {
     f"lr_constant_{value_lr}_eps_constant_{value_eps}": [
         {
-            "learning_rate": {"type": "constant", "value": value_lr},
-            "epsilon": {"type": "constant", "value": value_eps},
+            "learning_rate": {"type": "constant", "constant": {"value": value_lr}},
+            "epsilon": {"type": "constant", "constant": {"value": value_eps}},
         }
     ]
     for value_lr, value_eps in itertools.product(lr_constants, eps_constants)
