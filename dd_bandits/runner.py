@@ -62,6 +62,7 @@ class Runner(base_runner.BaseRunner):
             constants.LEARNING_RATE,
             constants.REWARD,
             constants.MEAN_OPTIMAL_REWARD,
+            constants.REGRET,
         ]
 
         for n_arm in range(self._n_arms):
@@ -164,6 +165,9 @@ class Runner(base_runner.BaseRunner):
         self._step_count = 0
         self._data_index = 0
 
+        self._reward = 0
+        self._mean_optimal_reward = 0
+
         for episode in range(self._n_episodes):
 
             self._logger.info(f"Beginning episode {episode}")
@@ -215,13 +219,22 @@ class Runner(base_runner.BaseRunner):
         )
 
         reward = np.sum(samples)
+        optimal_reward = self._batch_size * len(sampled_ind) * max(means)
 
         self._data_columns[constants.ACTION_SELECTED][self._data_index] = action
         self._data_columns[constants.EPSILON][self._data_index] = epsilon
         self._data_columns[constants.LEARNING_RATE][self._data_index] = learning_rate
+
         self._data_columns[constants.REWARD][self._data_index] = reward
-        self._data_columns[constants.MEAN_OPTIMAL_REWARD][self._data_index] = (
-            self._batch_size * len(sampled_ind) * max(means)
+        self._data_columns[constants.MEAN_OPTIMAL_REWARD][
+            self._data_index
+        ] = optimal_reward
+
+        self._reward += reward
+        self._mean_optimal_reward += optimal_reward
+
+        self._data_columns[constants.REGRET][self._data_index] = (
+            self._mean_optimal_reward - self._reward
         )
 
         for n_arm in range(self._n_arms):
