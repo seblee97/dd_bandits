@@ -19,7 +19,6 @@ class Estimator:
         return self._std_estimate
 
     def update(self, new_sample, learning_rate):
-        # print("PRE", self._std_estimate)
         delta = new_sample - self._mean_estimate
         self._mean_estimate += learning_rate * delta.mean()
 
