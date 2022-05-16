@@ -1,3 +1,5 @@
+seed: 4
+
 n_arms: 8
 n_ensemble: 16
 p_bootstrap: 0.5
