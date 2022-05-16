@@ -1,8 +1,8 @@
 import itertools
 
-eps_constants = [0.01, 0.1, 0.5, 0.9]
-lr_constants = [0.01, 0.05, 0.1, 0.5, 1]
-lr_modulations = [0.1, 0.05, 0.2, 0.5]
+eps_constants = [0.1, 0.9]
+lr_constants = [0.01, 0.05, 0.1, 0.5]
+lr_modulations = [0.1, 0.05, 0.5]
 lr_types = ["mean_std_of_mean", "action_mean_of_std", "mean_mean_of_std"]
 
 eps_types = ["max_std_of_mean"]
