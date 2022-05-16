@@ -3,8 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-import utils
-from dd_bandits import constants, plot_functions
+from dd_bandits import constants, plot_functions, utils
 from run_modes import base_runner
 
 
