@@ -264,15 +264,15 @@ class Runner(base_runner.BaseRunner):
                 self._estimator_group[n_arm].group_stds,
             )
 
-            # mean_of_std = np.mean(self._estimator_group[n_arm].group_stds)
-            # mean_of_mean = np.mean(self._estimator_group[n_arm].group_means)
-            # std_of_std = np.std(self._estimator_group[n_arm].group_stds)
-            # std_of_mean = np.std(self._estimator_group[n_arm].group_means)
+            mean_of_std = np.mean(self._estimator_group[n_arm].group_stds)
+            mean_of_mean = np.mean(self._estimator_group[n_arm].group_means)
+            std_of_std = np.std(self._estimator_group[n_arm].group_stds)
+            std_of_mean = np.std(self._estimator_group[n_arm].group_means)
 
             # self._data_columns[f"{constants.MEAN_OF_STD}_{n_arm}"][
             #     self._data_index
             # ] = mean_of_std
-            # self._latest_mean_of_std[n_arm] = mean_of_std
+            self._latest_mean_of_std[n_arm] = mean_of_std
 
             # self._data_columns[f"{constants.MEAN_OF_MEAN}_{n_arm}"][
             #     self._data_index
@@ -284,7 +284,7 @@ class Runner(base_runner.BaseRunner):
             # self._data_columns[f"{constants.STD_OF_MEAN}_{n_arm}"][
             #     self._data_index
             # ] = std_of_mean
-            # self._latest_std_of_mean[n_arm] = std_of_mean
+            self._latest_std_of_mean[n_arm] = std_of_mean
 
             # for e, (e_mean, e_std) in enumerate(
             #     zip(
