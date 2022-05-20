@@ -93,7 +93,12 @@ class ConfigTemplate:
                 key=constants.EPS_TYPE,
                 types=[str],
                 requirements=[
-                    lambda x: x in [constants.CONSTANT, constants.MAX_STD_OF_MEAN]
+                    lambda x: x
+                    in [
+                        constants.CONSTANT,
+                        constants.MAX_STD_OF_MEAN,
+                        constants.MEAN_STD_OF_MEAN,
+                    ]
                 ],
             ),
             config_field.Field(
