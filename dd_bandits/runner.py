@@ -70,20 +70,20 @@ class Runner(base_runner.BaseRunner):
             data_column_names.append(f"{constants.AVERAGE_KL_DIV}_{n_arm}")
             data_column_names.append(f"{constants.MAX_KL_DIV}_{n_arm}")
             data_column_names.append(f"{constants.INFORMATION_RADIUS}_{n_arm}")
-            # data_column_names.append(f"{constants.MEAN_OF_STD}_{n_arm}")
-            # data_column_names.append(f"{constants.MEAN_OF_MEAN}_{n_arm}")
-            # data_column_names.append(f"{constants.STD_OF_STD}_{n_arm}")
-            # data_column_names.append(f"{constants.STD_OF_MEAN}_{n_arm}")
+            data_column_names.append(f"{constants.MEAN_OF_STD}_{n_arm}")
+            data_column_names.append(f"{constants.MEAN_OF_MEAN}_{n_arm}")
+            data_column_names.append(f"{constants.STD_OF_STD}_{n_arm}")
+            data_column_names.append(f"{constants.STD_OF_MEAN}_{n_arm}")
 
-        for (n_arm, e) in itertools.product(
-            range(self._n_arms), range(self._n_ensemble)
-        ):
-            data_column_names.append(
-                f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-            )
-            data_column_names.append(
-                f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-            )
+        # for (n_arm, e) in itertools.product(
+        #     range(self._n_arms), range(self._n_ensemble)
+        # ):
+        #     data_column_names.append(
+        #         f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+        #     )
+        #     data_column_names.append(
+        #         f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+        #     )
 
         data_columns = {}
         for key in data_column_names:
@@ -269,21 +269,21 @@ class Runner(base_runner.BaseRunner):
             std_of_std = np.std(self._estimator_group[n_arm].group_stds)
             std_of_mean = np.std(self._estimator_group[n_arm].group_means)
 
-            # self._data_columns[f"{constants.MEAN_OF_STD}_{n_arm}"][
-            #     self._data_index
-            # ] = mean_of_std
+            self._data_columns[f"{constants.MEAN_OF_STD}_{n_arm}"][
+                self._data_index
+            ] = mean_of_std
             self._latest_mean_of_std[n_arm] = mean_of_std
 
-            # self._data_columns[f"{constants.MEAN_OF_MEAN}_{n_arm}"][
-            #     self._data_index
-            # ] = mean_of_mean
-            # self._data_columns[f"{constants.STD_OF_STD}_{n_arm}"][
-            #     self._data_index
-            # ] = std_of_std
+            self._data_columns[f"{constants.MEAN_OF_MEAN}_{n_arm}"][
+                self._data_index
+            ] = mean_of_mean
+            self._data_columns[f"{constants.STD_OF_STD}_{n_arm}"][
+                self._data_index
+            ] = std_of_std
 
-            # self._data_columns[f"{constants.STD_OF_MEAN}_{n_arm}"][
-            #     self._data_index
-            # ] = std_of_mean
+            self._data_columns[f"{constants.STD_OF_MEAN}_{n_arm}"][
+                self._data_index
+            ] = std_of_mean
             self._latest_std_of_mean[n_arm] = std_of_mean
 
             # for e, (e_mean, e_std) in enumerate(
