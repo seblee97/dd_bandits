@@ -1,11 +1,11 @@
 import itertools
 
-eps_constants = [0.1, 0.9]
-lr_constants = [0.01, 0.05, 0.1, 0.5]
-lr_modulations = [0.1, 0.05, 0.5]
-lr_types = ["mean_std_of_mean", "action_mean_of_std", "mean_mean_of_std"]
+eps_constants = [0.1, 0.5, 0.9]
+lr_constants = [0.01, 0.1, 1]
+lr_modulations = [0.1]
+lr_types = ["action_mean_of_std", "mean_mean_of_std"]
 
-eps_types = ["max_std_of_mean"]
+eps_types = ["max_std_of_mean", "mean_std_of_mean"]
 
 ADAPTIVE_CONFIG_CHANGES = {
     f"lr_{lr_type}_{modulation}_eps_{eps_type}": [
