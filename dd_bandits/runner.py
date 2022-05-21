@@ -24,6 +24,9 @@ class Runner(base_runner.BaseRunner):
 
         self._latest_std_of_mean = np.zeros(self._n_arms)
         self._latest_mean_of_std = np.zeros(self._n_arms)
+        self._latest_average_kl = np.zeros(self._n_arms)
+        self._latest_max_kl = np.zeros(self._n_arms)
+        self._latest_inf_radius = np.zeros(self._n_arms)
 
         self._step_count: int
         self._data_index: int
@@ -56,7 +59,7 @@ class Runner(base_runner.BaseRunner):
 
     def _setup_data_columns(self):
         data_column_names = [
-            # constants.ACTION_SELECTED,
+            constants.ACTION_SELECTED,
             constants.EPSILON,
             constants.LEARNING_RATE,
             constants.REWARD,
@@ -75,15 +78,15 @@ class Runner(base_runner.BaseRunner):
             data_column_names.append(f"{constants.STD_OF_STD}_{n_arm}")
             data_column_names.append(f"{constants.STD_OF_MEAN}_{n_arm}")
 
-        # for (n_arm, e) in itertools.product(
-        #     range(self._n_arms), range(self._n_ensemble)
-        # ):
-        #     data_column_names.append(
-        #         f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-        #     )
-        #     data_column_names.append(
-        #         f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-        #     )
+        for (n_arm, e) in itertools.product(
+            range(self._n_arms), range(self._n_ensemble)
+        ):
+            data_column_names.append(
+                f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+            )
+            data_column_names.append(
+                f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+            )
 
         data_columns = {}
         for key in data_column_names:
@@ -102,12 +105,32 @@ class Runner(base_runner.BaseRunner):
         elif config.eps_type == constants.MAX_STD_OF_MEAN:
 
             def eps_fn():
-                return np.min([1, np.max(self._latest_std_of_mean)])
+                computed_eps = np.min([1, np.max(self._latest_std_of_mean)])
+                return np.max([config.minimum_eps, computed_eps])
 
         elif config.eps_type == constants.MEAN_STD_OF_MEAN:
 
             def eps_fn():
-                return np.min([1, np.mean(self._latest_std_of_mean)])
+                computed_eps = np.min([1, np.mean(self._latest_std_of_mean)])
+                return np.max([config.minimum_eps, computed_eps])
+
+        elif config.eps_type == constants.MEAN_AVERAGE_KL:
+
+            def eps_fn():
+                computed_eps = np.min([1, np.mean(self._latest_average_kl)])
+                return np.max([config.minimum_eps, computed_eps])
+
+        elif config.eps_type == constants.MEAN_MAX_KL:
+
+            def eps_fn():
+                computed_eps = np.min([1, np.mean(self._latest_max_kl)])
+                return np.max([config.minimum_eps, computed_eps])
+
+        elif config.eps_type == constants.MEAN_INFORMATION_RADIUS:
+
+            def eps_fn():
+                computed_eps = np.min([1, np.mean(self._latest_inf_radius)])
+                return np.max([config.minimum_eps, computed_eps])
 
         return eps_fn
 
@@ -257,12 +280,18 @@ class Runner(base_runner.BaseRunner):
             self._data_columns[f"{constants.MAX_KL_DIV}_{n_arm}"][
                 self._data_index
             ] = np.max(kls)
-            self._data_columns[f"{constants.INFORMATION_RADIUS}_{n_arm}"][
-                self._data_index
-            ] = utils.compute_information_radius(
+
+            inf_radius = utils.compute_information_radius(
                 self._estimator_group[n_arm].group_means,
                 self._estimator_group[n_arm].group_stds,
             )
+            self._data_columns[f"{constants.INFORMATION_RADIUS}_{n_arm}"][
+                self._data_index
+            ] = inf_radius
+            self._latest_inf_radius[n_arm] = inf_radius
+
+            self._latest_average_kl[n_arm] = np.mean(kls)
+            self._latest_max_kl[n_arm] = np.max(kls)
 
             mean_of_std = np.mean(self._estimator_group[n_arm].group_stds)
             mean_of_mean = np.mean(self._estimator_group[n_arm].group_means)
@@ -286,18 +315,18 @@ class Runner(base_runner.BaseRunner):
             ] = std_of_mean
             self._latest_std_of_mean[n_arm] = std_of_mean
 
-            # for e, (e_mean, e_std) in enumerate(
-            #     zip(
-            #         self._estimator_group[n_arm].group_means,
-            #         self._estimator_group[n_arm].group_stds,
-            #     )
-            # ):
-            #     self._data_columns[
-            #         f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-            #     ][self._data_index] = e_mean
-            #     self._data_columns[
-            #         f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
-            #     ][self._data_index] = e_std
+            for e, (e_mean, e_std) in enumerate(
+                zip(
+                    self._estimator_group[n_arm].group_means,
+                    self._estimator_group[n_arm].group_stds,
+                )
+            ):
+                self._data_columns[
+                    f"{constants.ENSEMBLE_MEAN}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+                ][self._data_index] = e_mean
+                self._data_columns[
+                    f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
+                ][self._data_index] = e_std
 
     def post_process(self):
         df = self._data_logger.load_data()
