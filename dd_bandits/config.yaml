@@ -21,6 +21,7 @@ learning_rate:
 
 epsilon:
 
+    minimum_eps: 0
     default_eps: 0.2
 
     type: max_std_of_mean
