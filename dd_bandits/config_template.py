@@ -98,12 +98,20 @@ class ConfigTemplate:
                         constants.CONSTANT,
                         constants.MAX_STD_OF_MEAN,
                         constants.MEAN_STD_OF_MEAN,
+                        constants.MEAN_AVERAGE_KL,
+                        constants.MEAN_INFORMATION_RADIUS,
+                        constants.MEAN_MAX_KL,
                     ]
                 ],
             ),
             config_field.Field(
                 name=constants.DEFAULT_EPS,
                 types=[int, float],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
+            config_field.Field(
+                name=constants.MINIMUM_EPS,
+                types=[float, int],
                 requirements=[lambda x: x >= 0 and x <= 1],
             ),
         ],
