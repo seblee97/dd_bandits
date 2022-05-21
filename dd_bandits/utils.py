@@ -7,7 +7,7 @@ class Estimator:
     def __init__(
         self, mean_init: Union[float, int] = 0, std_init: Union[float, int] = 1
     ):
-        self._mean_estimate = mean_init
+        self._mean_estimate = np.random.normal(mean_init, std_init / 10)
         self._std_estimate = std_init
 
     @property
