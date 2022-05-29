@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from dd_bandits import constants, plot_functions, utils
+from dd_bandits import action_selection, constants, plot_functions, utils
 from run_modes import base_runner
 
 
@@ -22,11 +22,14 @@ class Runner(base_runner.BaseRunner):
         self._default_lr = config.default_lr
         self._default_epsilon = config.default_eps
 
-        self._latest_std_of_mean = np.zeros(self._n_arms)
-        self._latest_mean_of_std = np.zeros(self._n_arms)
-        self._latest_average_kl = np.zeros(self._n_arms)
-        self._latest_max_kl = np.zeros(self._n_arms)
-        self._latest_inf_radius = np.zeros(self._n_arms)
+        self._latest_metrics = {
+            constants.STD_OF_MEAN: np.zeros(self._n_arms),
+            constants.MEAN_OF_STD: np.zeros(self._n_arms),
+            constants.AVERAGE_KL: np.zeros(self._n_arms),
+            constants.MAX_KL: np.zeros(self._n_arms),
+            constants.INF_RADIUS: np.zeros(self._n_arms),
+            constants.ACTION_COUNTS: np.zeros(self._n_arms),
+        }
 
         self._step_count: int
         self._data_index: int
@@ -47,7 +50,7 @@ class Runner(base_runner.BaseRunner):
             for _ in range(self._n_episodes)
         ]
 
-        self._epsilon_computer = self._setup_epsilon_computer(config=config)
+        self._action_selector = action_selection.SelectAction(config=config)
         self._lr_computer = self._setup_lr_computer(config=config)
 
         self._data_columns = self._setup_data_columns()
@@ -96,44 +99,6 @@ class Runner(base_runner.BaseRunner):
 
         return data_columns
 
-    def _setup_epsilon_computer(self, config):
-        if config.eps_type == constants.CONSTANT:
-
-            def eps_fn():
-                return config.eps_value
-
-        elif config.eps_type == constants.MAX_STD_OF_MEAN:
-
-            def eps_fn():
-                computed_eps = np.min([1, np.max(self._latest_std_of_mean)])
-                return np.max([config.minimum_eps, computed_eps])
-
-        elif config.eps_type == constants.MEAN_STD_OF_MEAN:
-
-            def eps_fn():
-                computed_eps = np.min([1, np.mean(self._latest_std_of_mean)])
-                return np.max([config.minimum_eps, computed_eps])
-
-        elif config.eps_type == constants.MEAN_AVERAGE_KL:
-
-            def eps_fn():
-                computed_eps = np.min([1, np.mean(self._latest_average_kl)])
-                return np.max([config.minimum_eps, computed_eps])
-
-        elif config.eps_type == constants.MEAN_MAX_KL:
-
-            def eps_fn():
-                computed_eps = np.min([1, np.mean(self._latest_max_kl)])
-                return np.max([config.minimum_eps, computed_eps])
-
-        elif config.eps_type == constants.MEAN_INFORMATION_RADIUS:
-
-            def eps_fn():
-                computed_eps = np.min([1, np.mean(self._latest_inf_radius)])
-                return np.max([config.minimum_eps, computed_eps])
-
-        return eps_fn
-
     def _setup_lr_computer(self, config):
         if config.lr_type == constants.CONSTANT:
 
@@ -151,7 +116,9 @@ class Runner(base_runner.BaseRunner):
         elif config.lr_type == constants.MEAN_MEAN_OF_STD:
 
             def lr_fn(action: int):
-                lr = config.factor * np.mean(self._latest_mean_of_std)
+                lr = config.factor * np.mean(
+                    self._latest_metrics[constants.MEAN_OF_STD]
+                )
                 if lr == 0:
                     lr = self._default_lr
                 return lr
@@ -159,22 +126,14 @@ class Runner(base_runner.BaseRunner):
         elif config.lr_type == constants.MEAN_STD_OF_MEAN:
 
             def lr_fn(action: int):
-                lr = config.factor * np.mean(self._latest_std_of_mean)
+                lr = config.factor * np.mean(
+                    self._latest_metrics[constants.STD_OF_MEAN]
+                )
                 if lr == 0:
                     lr = self._default_lr
                 return lr
 
         return lr_fn
-
-    def _log_trial(self, trial_index: int, logging_dict: Dict[str, float]) -> None:
-        """Write scalars for all quantities collected in logging dictionary.
-
-        Args:
-            trial_index: current trial.
-            logging_dict: dictionary of items to be logged collected during training.
-        """
-        for tag, scalar in logging_dict.items():
-            self._data_logger.write_scalar(tag=tag, step=trial_index, scalar=scalar)
 
     def _checkpoint_data(self):
         self._data_logger.logger_data = pd.DataFrame.from_dict(self._data_columns)
@@ -213,15 +172,11 @@ class Runner(base_runner.BaseRunner):
 
     def _trial(self, trial_index: int, means: List[float], stds: List[float]):
 
-        epsilon = self._epsilon_computer()
-
-        # epsilon-greedy action selection
-        if np.random.random() < epsilon:
-            action = np.random.randint(self._n_arms)
-        else:
-            action = np.argmax(
-                [np.mean(eg.group_means) for eg in self._estimator_group]
-            )
+        action, metrics = self._action_selector(
+            latest_metrics=self._latest_metrics, estimator_group=self._estimator_group
+        )
+        for key, metric in metrics.items():
+            self._data_columns[key][self._data_index] = metric
 
         sampled_ind = np.where(np.random.random(self._n_ensemble) < self._p_bootstrap)[
             0
@@ -243,10 +198,8 @@ class Runner(base_runner.BaseRunner):
         reward = np.sum(samples)
         optimal_reward = self._batch_size * len(sampled_ind) * max(means)
 
-        # self._data_columns[constants.ACTION_SELECTED][self._data_index] = action
-        self._data_columns[constants.EPSILON][self._data_index] = epsilon
+        self._data_columns[constants.ACTION_SELECTED][self._data_index] = action
         self._data_columns[constants.LEARNING_RATE][self._data_index] = learning_rate
-
         self._data_columns[constants.REWARD][self._data_index] = reward
         self._data_columns[constants.MEAN_OPTIMAL_REWARD][
             self._data_index
@@ -258,6 +211,8 @@ class Runner(base_runner.BaseRunner):
         self._data_columns[constants.REGRET][self._data_index] = (
             self._mean_optimal_reward - self._reward
         )
+
+        self._latest_metrics[constants.ACTION_COUNTS][action] += 1
 
         for n_arm in range(self._n_arms):
 
@@ -288,10 +243,10 @@ class Runner(base_runner.BaseRunner):
             self._data_columns[f"{constants.INFORMATION_RADIUS}_{n_arm}"][
                 self._data_index
             ] = inf_radius
-            self._latest_inf_radius[n_arm] = inf_radius
+            self._latest_metrics[constants.INF_RADIUS][n_arm] = inf_radius
 
-            self._latest_average_kl[n_arm] = np.mean(kls)
-            self._latest_max_kl[n_arm] = np.max(kls)
+            self._latest_metrics[constants.AVERAGE_KL][n_arm] = np.mean(kls)
+            self._latest_metrics[constants.MAX_KL][n_arm] = np.max(kls)
 
             mean_of_std = np.mean(self._estimator_group[n_arm].group_stds)
             mean_of_mean = np.mean(self._estimator_group[n_arm].group_means)
@@ -301,7 +256,7 @@ class Runner(base_runner.BaseRunner):
             self._data_columns[f"{constants.MEAN_OF_STD}_{n_arm}"][
                 self._data_index
             ] = mean_of_std
-            self._latest_mean_of_std[n_arm] = mean_of_std
+            self._latest_metrics[constants.MEAN_OF_STD][n_arm] = mean_of_std
 
             self._data_columns[f"{constants.MEAN_OF_MEAN}_{n_arm}"][
                 self._data_index
@@ -313,7 +268,7 @@ class Runner(base_runner.BaseRunner):
             self._data_columns[f"{constants.STD_OF_MEAN}_{n_arm}"][
                 self._data_index
             ] = std_of_mean
-            self._latest_std_of_mean[n_arm] = std_of_mean
+            self._latest_metrics[constants.STD_OF_MEAN][n_arm] = std_of_mean
 
             for e, (e_mean, e_std) in enumerate(
                 zip(
