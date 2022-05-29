@@ -119,6 +119,19 @@ class ConfigTemplate:
         nested_templates=[_constant_eps_template],
     )
 
+    _ucb_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.UCB_CONSTANT,
+                types=[float, int],
+                requirements=[lambda x: x > 0],
+            )
+        ],
+        level=[constants.UCB],
+        dependent_variables=[constants.ACTION_SELECTION],
+        dependent_variables_required_values=[[constants.UCB]],
+    )
+
     @property
     def base_template(self):
         return config_template.Template(
@@ -138,6 +151,18 @@ class ConfigTemplate:
                     name=constants.DISTRIBUTION_MEAN_RANGE, types=[list]
                 ),
                 config_field.Field(name=constants.DISTRIBUTION_STD_RANGE, types=[list]),
+                config_field.Field(
+                    name=constants.ACTION_SELECTION,
+                    types=[str],
+                    requirements=[
+                        lambda x: x
+                        in [constants.EPSILON_GREEDY, constants.UCB, constants.THOMPSON]
+                    ],
+                ),
             ],
-            nested_templates=[self._learning_rate_template, self._epsilon_template],
+            nested_templates=[
+                self._learning_rate_template,
+                self._epsilon_template,
+                self._ucb_template,
+            ],
         )
