@@ -6,6 +6,7 @@ p_bootstrap: 0.5
 change_freq: 10000
 batch_size: 64
 n_episodes: 2
+action_selection: ucb
 
 learning_rate:
 
@@ -28,6 +29,9 @@ epsilon:
 
     constant:
         value: 0.8
+
+ucb:
+    ucb_constant: 20
 
 distribution_mean_range: [-5, 5]
 distribution_std_range: [0.03, 1.7]
