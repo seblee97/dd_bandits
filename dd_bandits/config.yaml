@@ -6,7 +6,20 @@ p_bootstrap: 0.5
 change_freq: 10000
 batch_size: 64
 n_episodes: 2
-action_selection: ucb
+
+optimiser: rms_prop
+action_selection: thompson
+
+adam:
+    alpha: 0.05
+    beta_1: 0.9
+    beta_2: 0.999
+    epsilon: 0.00000001
+
+rms_prop:
+    eta: 0.01
+    gamma: 0.9
+    epsilon: 0.00000001
 
 learning_rate:
 
@@ -16,6 +29,11 @@ learning_rate:
 
     constant: 
         value: 0.05
+
+    linear_decay:
+        initial_lr: 1
+        final_lr: 0.1
+        lr_decay: 0.0001
 
     modulate:
         factor: 1
@@ -28,7 +46,12 @@ epsilon:
     type: max_std_of_mean
 
     constant:
-        value: 0.8
+        value: 1
+
+    linear_decay:
+        initial_eps: 1
+        final_eps: 0.1
+        eps_decay: 0.0001
 
 ucb:
     ucb_constant: 20
