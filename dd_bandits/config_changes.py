@@ -57,7 +57,8 @@ UCB_CONFIG_CHANGES = {
     f"ucb_{ucb}_lr_{lr}": [
         {
             "optimiser": "sgd",
-            "action_selection": ucb,
+            "action_selection": "ucb",
+            "ucb": {"ucb_constant": ucb},
             "learning_rate": {"type": "constant", "constant": {"value": lr}},
         }
     ]
