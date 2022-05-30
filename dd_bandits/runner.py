@@ -52,6 +52,7 @@ class Runner(base_runner.BaseRunner):
         self._lr_computer = self._setup_lr_computer(config=config)
 
         self._data_columns = self._setup_data_columns()
+        self._log_columns = self._get_data_columns()
 
         self._estimator_group = [
             utils.EstimatorGroup(
@@ -63,7 +64,11 @@ class Runner(base_runner.BaseRunner):
         super().__init__(config=config)
 
     def _get_data_columns(self):
-        return list(self._data_columns.keys())
+        return [
+            column
+            for column in list(self._data_columns.keys())
+            if column in [constants.MEAN_OPTIMAL_REWARD, constants.REGRET]
+        ]
 
     def _setup_data_columns(self):
         data_column_names = [
@@ -192,7 +197,8 @@ class Runner(base_runner.BaseRunner):
         return lr_fn
 
     def _checkpoint_data(self):
-        self._data_logger.logger_data = pd.DataFrame.from_dict(self._data_columns)
+        log_dict = {k: self._data_columns[k] for k in self._log_columns}
+        self._data_logger.logger_data = pd.DataFrame.from_dict(log_dict)
         self._data_logger.checkpoint()
         self._data_columns = self._setup_data_columns()
         self._data_index = 0
