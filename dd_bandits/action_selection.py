@@ -23,16 +23,35 @@ class SelectAction(abc.ABC):
     def _select_action(self):
         pass
 
+    @abc.abstractmethod
+    def update(self, action, reward):
+        pass
+
 
 class ThompsonSampling(SelectAction):
     def __init__(self, config):
         super().__init__(config=config)
 
-        self._alphas = np.zeros(self._n_arms)
-        self._betas = np.zeros(self._n_arms)
+        self._mus = np.zeros(self._n_arms)
+        self._sigmas = np.zeros(self._n_arms)
 
     def _select_action(self):
-        raise NotImplementedError
+        # group_means = [eg.group_means for eg in self._estimator_group]
+        # group_stds = [eg.group_stds for eg in self._estimator_group]
+        # samples = [
+        #     [np.random.normal(loc=mean, scale=std) for mean, std in zip(means, stds)]
+        #     for means, stds in zip(group_means, group_stds)
+        # ]
+        samples = [
+            np.random.normal(loc=mean, scale=std)
+            for mean, std in zip(self._mus, self._sigmas)
+        ]
+        action = np.argmax(np.mean(samples, axis=1))
+        return action, {}
+
+    def update(self, action, reward):
+        self._mus[action]
+        self._sigmas[action]
 
 
 class UCB(SelectAction):
@@ -49,6 +68,9 @@ class UCB(SelectAction):
         ]
         action = np.argmax(ucb_values)
         return action, {}
+
+    def update(self, action, reward):
+        pass
 
 
 class EpsilonGreedy(SelectAction):
@@ -125,3 +147,6 @@ class EpsilonGreedy(SelectAction):
             )
 
         return action, {constants.EPSILON: epsilon}
+
+    def update(self, action, reward):
+        pass
