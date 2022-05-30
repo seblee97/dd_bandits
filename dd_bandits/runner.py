@@ -9,9 +9,6 @@ from run_modes import base_runner
 
 class Runner(base_runner.BaseRunner):
     def __init__(self, config, unique_id: str):
-        self._estimator_group = [
-            utils.EstimatorGroup(config.n_ensemble) for _ in range(config.n_arms)
-        ]
 
         self._n_ensemble = config.n_ensemble
         self._n_episodes = config.n_episodes
@@ -50,10 +47,18 @@ class Runner(base_runner.BaseRunner):
             for _ in range(self._n_episodes)
         ]
 
-        self._action_selector = action_selection.SelectAction(config=config)
+        self._action_selector = self._setup_action_selection(config=config)
+        self._optimiser = self._setup_optimiser(config=config)
         self._lr_computer = self._setup_lr_computer(config=config)
 
         self._data_columns = self._setup_data_columns()
+
+        self._estimator_group = [
+            utils.EstimatorGroup(
+                optimiser=self._optimiser, total_num_estimators=config.n_ensemble
+            )
+            for _ in range(config.n_arms)
+        ]
 
         super().__init__(config=config)
 
@@ -99,11 +104,44 @@ class Runner(base_runner.BaseRunner):
 
         return data_columns
 
+    def _setup_action_selection(self, config):
+        if config.action_selection == constants.EPSILON_GREEDY:
+            return action_selection.EpsilonGreedy(config=config)
+        elif config.action_selection == constants.UCB:
+            return action_selection.UCB(config=config)
+        elif config.action_selection == constants.THOMPSON:
+            return action_selection.ThompsonSampling(config=config)
+
+    def _setup_optimiser(self, config):
+        if config.optimiser == constants.SGD:
+            return utils.SGD()
+        elif config.optimiser == constants.ADAM:
+            return utils.Adam(
+                alpha=config.alpha,
+                beta_1=config.beta_1,
+                beta_2=config.beta_2,
+                epsilon=config.epsilon,
+            )
+        elif config.optimiser == constants.RMS_PROP:
+            return utils.RMSProp(
+                eta=config.eta, gamma=config.gamma, epsilon=config.epsilon
+            )
+
     def _setup_lr_computer(self, config):
         if config.lr_type == constants.CONSTANT:
 
             def lr_fn(action: int):
                 return config.lr_value
+
+        elif config.lr_type == constants.LINEAR_DECAY:
+
+            def lr_fn(action: int):
+                return max(
+                    [
+                        config.initial_lr - self._step_count * config.lr_decay,
+                        config.final_lr,
+                    ]
+                )
 
         elif config.lr_type == constants.ACTION_MEAN_OF_STD:
 
@@ -128,6 +166,24 @@ class Runner(base_runner.BaseRunner):
             def lr_fn(action: int):
                 lr = config.factor * np.mean(
                     self._latest_metrics[constants.STD_OF_MEAN]
+                )
+                if lr == 0:
+                    lr = self._default_lr
+                return lr
+
+        elif config.lr_type == constants.UNCERTAINTY_FRACTION:
+
+            def lr_fn(action: int):
+                epistemic_uncertainty = np.mean(
+                    self._latest_metrics[constants.MEAN_OF_STD]
+                )
+                aleatoric_uncertainty = np.mean(
+                    self._latest_metrics[constants.AVERAGE_KL]
+                )
+                lr = (
+                    config.factor
+                    * epistemic_uncertainty
+                    / (epistemic_uncertainty + aleatoric_uncertainty + 0.0001)
                 )
                 if lr == 0:
                     lr = self._default_lr
