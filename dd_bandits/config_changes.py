@@ -2,6 +2,7 @@ import itertools
 
 eps_constants = [0.1, 0.5, 0.9]
 lr_constants = [0.01, 0.1, 1]
+ucb_constants = [1, 10, 20, 50, 100, 1000]
 lr_modulations = [0.1, 0.05, 0.2]
 action_selections = ["ucb", "epsilon_greedy"]
 lr_types = ["mean_mean_of_std", "uncertainty_fraction", "linear_decay"]
@@ -50,6 +51,17 @@ ADAPTIVE_RMS_CONFIG_CHANGES = {
         }
     ]
     for eps_type, action_selection in itertools.product(eps_types, action_selections)
+}
+
+UCB_CONFIG_CHANGES = {
+    f"ucb_{ucb}_lr_{lr}": [
+        {
+            "optimiser": "sgd",
+            "action_selection": ucb,
+            "learning_rate": {"type": "constant", "constant": {"value": lr}},
+        }
+    ]
+    for ucb, lr in itertools.product(ucb_constants, lr_constants)
 }
 
 CONFIG_CHANGES = {
