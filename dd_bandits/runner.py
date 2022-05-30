@@ -252,6 +252,7 @@ class Runner(base_runner.BaseRunner):
         )
 
         reward = np.sum(samples)
+        self._action_selector.update(action, reward)
         optimal_reward = self._batch_size * len(sampled_ind) * max(means)
 
         self._data_columns[constants.ACTION_SELECTED][self._data_index] = action
