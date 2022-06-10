@@ -234,6 +234,29 @@ class ConfigTemplate:
         dependent_variables_required_values=[[constants.UCB]],
     )
 
+    _discounted_ucb_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.UCB_GAMMA,
+                types=[float, int],
+                requirements=[lambda x: x >= 0 and x < 1],
+            ),
+            config_field.Field(
+                name=constants.UCB_EPSILON,
+                types=[float, int],
+                requirements=[lambda x: x > 0],
+            ),
+            config_field.Field(
+                name=constants.UCB_CONSTANT,
+                types=[float, int],
+                requirements=[lambda x: x > 0],
+            ),
+        ],
+        level=[constants.DISCOUNTED_UCB],
+        dependent_variables=[constants.ACTION_SELECTION],
+        dependent_variables_required_values=[[constants.DISCOUNTED_UCB]],
+    )
+
     @property
     def base_template(self):
         return config_template.Template(
@@ -258,7 +281,12 @@ class ConfigTemplate:
                     types=[str],
                     requirements=[
                         lambda x: x
-                        in [constants.EPSILON_GREEDY, constants.UCB, constants.THOMPSON]
+                        in [
+                            constants.EPSILON_GREEDY,
+                            constants.UCB,
+                            constants.DISCOUNTED_UCB,
+                            constants.THOMPSON,
+                        ]
                     ],
                 ),
                 config_field.Field(
@@ -276,5 +304,6 @@ class ConfigTemplate:
                 self._learning_rate_template,
                 self._epsilon_template,
                 self._ucb_template,
+                self._discounted_ucb_template,
             ],
         )
