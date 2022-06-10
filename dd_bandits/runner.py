@@ -20,12 +20,15 @@ class Runner(base_runner.BaseRunner):
         self._default_epsilon = config.default_eps
 
         self._latest_metrics = {
+            constants.TOTAL_ARM_REWARDS: np.zeros(self._n_arms),
             constants.STD_OF_MEAN: np.zeros(self._n_arms),
             constants.MEAN_OF_STD: np.zeros(self._n_arms),
             constants.AVERAGE_KL: np.zeros(self._n_arms),
             constants.MAX_KL: np.zeros(self._n_arms),
             constants.INF_RADIUS: np.zeros(self._n_arms),
             constants.ACTION_COUNTS: np.zeros(self._n_arms),
+            constants.ACTION_HISTORY: [],
+            constants.REWARD_HISTORY: [],
         }
 
         self._step_count: int
@@ -67,7 +70,7 @@ class Runner(base_runner.BaseRunner):
         return [
             column
             for column in list(self._data_columns.keys())
-            if column in [constants.MEAN_OPTIMAL_REWARD, constants.REGRET]
+            # if column in [constants.MEAN_OPTIMAL_REWARD, constants.REGRET]
         ]
 
     def _setup_data_columns(self):
@@ -114,6 +117,8 @@ class Runner(base_runner.BaseRunner):
             return action_selection.EpsilonGreedy(config=config)
         elif config.action_selection == constants.UCB:
             return action_selection.UCB(config=config)
+        elif config.action_selection == constants.DISCOUNTED_UCB:
+            return action_selection.DiscountedUCB(config=config)
         elif config.action_selection == constants.THOMPSON:
             return action_selection.ThompsonSampling(config=config)
 
@@ -244,6 +249,7 @@ class Runner(base_runner.BaseRunner):
             0
         ]
 
+        # print("sampled_ind", sampled_ind)
         if len(sampled_ind) == 0:
             sampled_ind = [np.random.randint(self._n_ensemble)]
 
@@ -257,7 +263,7 @@ class Runner(base_runner.BaseRunner):
             learning_rate=learning_rate,
         )
 
-        reward = np.sum(samples)
+        reward = np.mean(samples)
         self._action_selector.update(action, reward)
         optimal_reward = self._batch_size * len(sampled_ind) * max(means)
 
@@ -276,6 +282,9 @@ class Runner(base_runner.BaseRunner):
         )
 
         self._latest_metrics[constants.ACTION_COUNTS][action] += 1
+        self._latest_metrics[constants.ACTION_HISTORY].append(action)
+        self._latest_metrics[constants.REWARD_HISTORY].append(reward)
+        self._latest_metrics[constants.TOTAL_ARM_REWARDS][action] += reward
 
         for n_arm in range(self._n_arms):
 
