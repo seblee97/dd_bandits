@@ -7,8 +7,8 @@ change_freq: 10000
 batch_size: 64
 n_episodes: 2
 
-optimiser: rms_prop
-action_selection: thompson
+optimiser: sgd
+action_selection: discounted_ucb
 
 adam:
     alpha: 0.05
@@ -25,10 +25,10 @@ learning_rate:
 
     default_lr: 0.05 
 
-    type: mean_std_of_mean
+    type: constant
 
     constant: 
-        value: 0.05
+        value: 0.1
 
     linear_decay:
         initial_lr: 1
@@ -36,14 +36,14 @@ learning_rate:
         lr_decay: 0.0001
 
     modulate:
-        factor: 1
+        factor: 0.1
 
 epsilon:
 
     minimum_eps: 0
     default_eps: 0.2
 
-    type: max_std_of_mean
+    type: constant
 
     constant:
         value: 1
@@ -54,7 +54,12 @@ epsilon:
         eps_decay: 0.0001
 
 ucb:
-    ucb_constant: 20
+    ucb_constant: 10
 
-distribution_mean_range: [-5, 5]
+discounted_ucb:
+    ucb_gamma: 0.99
+    ucb_epsilon: 0.5
+    ucb_constant: 1
+
+distribution_mean_range: [-3, 3]
 distribution_std_range: [0.03, 1.7]
