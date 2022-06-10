@@ -27,8 +27,8 @@ class Runner(base_runner.BaseRunner):
             constants.MAX_KL: np.zeros(self._n_arms),
             constants.INF_RADIUS: np.zeros(self._n_arms),
             constants.ACTION_COUNTS: np.zeros(self._n_arms),
-            constants.ACTION_HISTORY: [],
-            constants.REWARD_HISTORY: [],
+            constants.ACTION_HISTORY: [[] for _ in range(self._n_arms)],
+            constants.REWARD_HISTORY: np.zeros(self._n_episodes * self._change_freq),
         }
 
         self._step_count: int
@@ -282,8 +282,8 @@ class Runner(base_runner.BaseRunner):
         )
 
         self._latest_metrics[constants.ACTION_COUNTS][action] += 1
-        self._latest_metrics[constants.ACTION_HISTORY].append(action)
-        self._latest_metrics[constants.REWARD_HISTORY].append(reward)
+        self._latest_metrics[constants.ACTION_HISTORY][action].append(self._step_count)
+        self._latest_metrics[constants.REWARD_HISTORY][self._step_count] = reward
         self._latest_metrics[constants.TOTAL_ARM_REWARDS][action] += reward
 
         for n_arm in range(self._n_arms):
