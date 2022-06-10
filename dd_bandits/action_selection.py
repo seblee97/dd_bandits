@@ -60,13 +60,74 @@ class UCB(SelectAction):
         self._ucb_constant: Union[float, int] = config.ucb_constant
 
     def _select_action(self):
+        total_arm_rewards = self._latest_metrics[constants.TOTAL_ARM_REWARDS]
         action_counts = self._latest_metrics[constants.ACTION_COUNTS]
+        empirical_reward_estimates = total_arm_rewards / action_counts
+
         ucb_values = [
-            np.mean(eg.group_means)
-            + self._ucb_constant * np.sqrt(np.log(self._timestep) / action_counts[a])
-            for a, eg in enumerate(self._estimator_group)
+            reward_estimate
+            + self._ucb_constant
+            * np.sqrt(2 * np.log(self._timestep) / action_counts[a])
+            for a, reward_estimate in enumerate(empirical_reward_estimates)
         ]
+        print("counts", action_counts)
+        print(
+            "estimates",
+            [round(np.mean(eg.group_means), 2) for eg in self._estimator_group],
+        )
+        print(
+            "emp estimates",
+            [
+                round(reward_estimate, 2)
+                for reward_estimate in empirical_reward_estimates
+            ],
+        )
+        print("ucb", [round(v, 2) for v in ucb_values])
         action = np.argmax(ucb_values)
+        return action, {}
+
+    def update(self, action, reward):
+        pass
+
+
+class DiscountedUCB(SelectAction):
+    """Garivier & Moulines (2008)"""
+
+    def __init__(self, config):
+        super().__init__(config=config)
+        self._ucb_gamma: Union[float, int] = config.ucb_gamma
+        self._ucb_epsilon: Union[float, int] = config.ucb_epsilon
+        self._ucb_constant: Union[float, int] = config.ucb_constant
+
+    def _select_action(self):
+        action_history = np.array(self._latest_metrics[constants.ACTION_HISTORY])
+        reward_history = self._latest_metrics[constants.REWARD_HISTORY]
+
+        action_history_positions = [
+            np.where(action_history == i)[0] for i in range(self._n_arms)
+        ]
+
+        discounted_counts = np.zeros(self._n_arms)
+        discounted_values = np.zeros(self._n_arms)
+        for i, history_positions in enumerate(action_history_positions):
+            for pos in history_positions:
+                discounted_counts[i] += self._ucb_gamma ** (self._timestep - (pos + 1))
+                discounted_values[i] += (
+                    self._ucb_gamma ** (self._timestep - (pos + 1))
+                    * reward_history[pos]
+                )
+        count_discounted_values = discounted_values / discounted_counts
+
+        padding_discounting = (
+            2
+            * self._ucb_constant
+            * np.sqrt(
+                self._ucb_epsilon * np.log(sum(discounted_counts)) / discounted_counts
+            )
+        )
+        ucb_values = count_discounted_values + padding_discounting
+        action = np.argmax(ucb_values)
+
         return action, {}
 
     def update(self, action, reward):
