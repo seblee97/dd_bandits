@@ -100,16 +100,12 @@ class DiscountedUCB(SelectAction):
         self._ucb_constant: Union[float, int] = config.ucb_constant
 
     def _select_action(self):
-        action_history = np.array(self._latest_metrics[constants.ACTION_HISTORY])
+        action_history = self._latest_metrics[constants.ACTION_HISTORY]
         reward_history = self._latest_metrics[constants.REWARD_HISTORY]
-
-        action_history_positions = [
-            np.where(action_history == i)[0] for i in range(self._n_arms)
-        ]
 
         discounted_counts = np.zeros(self._n_arms)
         discounted_values = np.zeros(self._n_arms)
-        for i, history_positions in enumerate(action_history_positions):
+        for i, history_positions in enumerate(action_history):
             for pos in history_positions:
                 discounted_counts[i] += self._ucb_gamma ** (self._timestep - (pos + 1))
                 discounted_values[i] += (
