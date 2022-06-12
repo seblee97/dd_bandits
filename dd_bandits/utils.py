@@ -25,17 +25,26 @@ class Estimator:
         return self._std_estimate
 
     def update(self, new_sample, learning_rate):
-        delta = self._mean_estimate - new_sample
-        delta_bar = self._std_estimate**2 - delta**2
+        new_sample_mean = np.mean(new_sample)
+        new_sample_logvar = np.log(np.var(new_sample))
+        mean_gradient = 2 * (self._mean_estimate - new_sample_mean)
+        logvar_gradient = 2 * (np.log(self._std_estimate**2) - new_sample_logvar)
+        # delta = self._mean_estimate - new_sample
+        # delta_bar = self._std_estimate**2 - delta**2
 
         update_step = self._optimiser.update(
-            gradient=np.array([delta.mean(), delta_bar.mean()]),
+            # gradient=np.array([delta.mean(), delta_bar.mean()]),
+            gradient=np.array([mean_gradient, logvar_gradient]),
             learning_rate=learning_rate,
         )
 
         self._mean_estimate += update_step[0]
-        var = self._std_estimate**2 + update_step[1]
-        self._std_estimate = np.sqrt(var)
+        logvar = np.log(self._std_estimate**2) + update_step[1]
+        # if var <= 0:
+        #     import pdb
+
+        #     pdb.set_trace()
+        self._std_estimate = np.sqrt(np.exp(logvar))
 
 
 class EstimatorGroup:
