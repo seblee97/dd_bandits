@@ -3,6 +3,8 @@ import itertools
 eps_constants = [0.1, 0.5, 0.9]
 lr_constants = [0.01, 0.1, 1]
 ucb_constants = [1, 10, 20, 50, 100, 1000]
+ducb_gammas = [0.8, 0.9, 0.95, 0.99]
+ducb_eps = [0.25, 0.5, 0.75, 0.9]
 lr_modulations = [0.1, 0.05, 0.2]
 action_selections = ["ucb", "epsilon_greedy"]
 lr_types = ["mean_mean_of_std", "uncertainty_fraction", "linear_decay"]
@@ -63,6 +65,20 @@ UCB_CONFIG_CHANGES = {
         }
     ]
     for ucb, lr in itertools.product(ucb_constants, lr_constants)
+}
+
+DISCOUNTED_UCB_CONFIG_CHANGES = {
+    f"discounted_ucb_{const}_{gamma}_{eps}_lr_{lr}": [
+        {
+            "optimiser": "sgd",
+            "action_selection": "discounted_ucb",
+            "discounted_ucb": {"ucb_constant": const},
+            "learning_rate": {"type": "constant", "constant": {"value": lr}},
+        }
+    ]
+    for const, gamma, eps, lr in itertools.product(
+        ucb_constants, ducb_gammas, ducb_eps, lr_constants
+    )
 }
 
 CONFIG_CHANGES = {
