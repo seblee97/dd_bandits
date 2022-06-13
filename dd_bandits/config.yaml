@@ -8,7 +8,7 @@ batch_size: 64
 n_episodes: 2
 
 optimiser: sgd
-action_selection: discounted_ucb
+action_selection: softmax
 
 adam:
     alpha: 0.05
@@ -52,6 +52,21 @@ epsilon:
         initial_eps: 1
         final_eps: 0.1
         eps_decay: 0.0001
+
+beta:
+
+    minimum_beta: 0
+    default_beta: 0.2
+
+    type: constant
+
+    constant:
+        value: 1000
+
+    linear_decay:
+        initial_beta: 1
+        final_beta: 0.1
+        beta_decay: 0.0001
 
 ucb:
     ucb_constant: 10
