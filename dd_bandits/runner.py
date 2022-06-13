@@ -77,6 +77,7 @@ class Runner(base_runner.BaseRunner):
         data_column_names = [
             constants.ACTION_SELECTED,
             constants.EPSILON,
+            constants.BETA,
             constants.LEARNING_RATE,
             constants.REWARD,
             constants.MEAN_OPTIMAL_REWARD,
@@ -121,6 +122,8 @@ class Runner(base_runner.BaseRunner):
             return action_selection.DiscountedUCB(config=config)
         elif config.action_selection == constants.THOMPSON:
             return action_selection.ThompsonSampling(config=config)
+        elif config.action_selection == constants.SOFTMAX:
+            return action_selection.Softmax(config=config)
 
     def _setup_optimiser(self, config):
         if config.optimiser == constants.SGD:
