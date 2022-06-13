@@ -72,7 +72,11 @@ DISCOUNTED_UCB_CONFIG_CHANGES = {
         {
             "optimiser": "sgd",
             "action_selection": "discounted_ucb",
-            "discounted_ucb": {"ucb_constant": const},
+            "discounted_ucb": {
+                "ucb_constant": const,
+                "ucb_gamma": gamma,
+                "ucb_epsilon": eps,
+            },
             "learning_rate": {"type": "constant", "constant": {"value": lr}},
         }
     ]
