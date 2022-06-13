@@ -76,19 +76,6 @@ class UCB(SelectAction):
             * np.sqrt(2 * np.log(self._timestep) / action_counts[a])
             for a, reward_estimate in enumerate(empirical_reward_estimates)
         ]
-        print("counts", action_counts)
-        print(
-            "estimates",
-            [round(np.mean(eg.group_means), 2) for eg in self._estimator_group],
-        )
-        print(
-            "emp estimates",
-            [
-                round(reward_estimate, 2)
-                for reward_estimate in empirical_reward_estimates
-            ],
-        )
-        print("ucb", [round(v, 2) for v in ucb_values])
         action = np.argmax(ucb_values)
         return action, {}
 
