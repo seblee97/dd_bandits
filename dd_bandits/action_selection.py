@@ -136,6 +136,85 @@ class DiscountedUCB(SelectAction):
         pass
 
 
+class Softmax(SelectAction):
+    def __init__(self, config):
+        super().__init__(config=config)
+        self._beta_computer = self._setup_beta_computer(config)
+
+    def _setup_beta_computer(self, config):
+        if config.beta_type == constants.CONSTANT:
+
+            def beta_fn():
+                return config.beta_value
+
+        elif config.beta_type == constants.LINEAR_DECAY:
+
+            initial_beta = config.initial_beta
+            final_beta = config.final_beta
+            beta_decay = config.beta_decay
+
+            def beta_fn():
+                return max([initial_beta - self._timestep * beta_decay, final_beta])
+
+        elif config.beta_type == constants.MAX_STD_OF_MEAN:
+
+            def beta_fn():
+                computed_beta = np.min(
+                    [1, np.max(self._latest_metrics[constants.STD_OF_MEAN])]
+                )
+                return 1 / np.max([config.minimum_beta, computed_beta])
+
+        elif config.beta_type == constants.MEAN_STD_OF_MEAN:
+
+            def beta_fn():
+                computed_beta = np.min(
+                    [1, np.mean(self._latest_metrics[constants.STD_OF_MEAN])]
+                )
+                return 1 / np.max([config.minimum_beta, computed_beta])
+
+        elif config.beta_type == constants.MEAN_AVERAGE_KL:
+
+            def beta_fn():
+                computed_beta = np.min(
+                    [1, np.mean(self._latest_metrics[constants.AVERAGE_KL])]
+                )
+                return 1 / np.max([config.minimum_beta, computed_beta])
+
+        elif config.beta_type == constants.MEAN_MAX_KL:
+
+            def beta_fn():
+                computed_beta = np.min(
+                    [1, np.mean(self._latest_metrics[constants.MAX_KL])]
+                )
+                return 1 / np.max([config.minimum_beta, computed_beta])
+
+        elif config.beta_type == constants.MEAN_INFORMATION_RADIUS:
+
+            def beta_fn():
+                computed_beta = np.min(
+                    [1, np.mean(self._latest_metrics[constants.INF_RADIUS])]
+                )
+                return 1 / np.max([config.minimum_beta, computed_beta])
+
+        return beta_fn
+
+    def _select_action(self):
+        beta = self._beta_computer()
+
+        max_value_estimates = np.array(
+            [np.mean(eg.group_means) for eg in self._estimator_group]
+        )
+        exp_max_value_estimates = np.exp(max_value_estimates / beta)
+        sotfmax_distribution = exp_max_value_estimates / sum(exp_max_value_estimates)
+
+        action = np.random.choice(range(self._n_arms), p=sotfmax_distribution)
+
+        return action, {constants.BETA: beta}
+
+    def update(self, action, reward):
+        pass
+
+
 class EpsilonGreedy(SelectAction):
     def __init__(self, config):
         super().__init__(config=config)
