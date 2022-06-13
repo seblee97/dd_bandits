@@ -221,6 +221,77 @@ class ConfigTemplate:
         nested_templates=[_constant_eps_template, _linear_decay_eps_template],
     )
 
+    _constant_beta_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.VALUE,
+                key=constants.BETA_VALUE,
+                types=[int, float],
+                requirements=[lambda x: x >= 0],
+            )
+        ],
+        level=[constants.BETA, constants.CONSTANT],
+        dependent_variables=[constants.BETA_TYPE],
+        dependent_variables_required_values=[[constants.CONSTANT]],
+    )
+
+    _linear_decay_beta_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.INITIAL_BETA,
+                types=[int, float],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
+            config_field.Field(
+                name=constants.FINAL_BETA,
+                types=[int, float],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
+            config_field.Field(
+                name=constants.BETA_DECAY,
+                types=[int, float],
+                requirements=[lambda x: x > 0 and x <= 1],
+            ),
+        ],
+        level=[constants.BETA, constants.LINEAR_DECAY],
+        dependent_variables=[constants.BETA_TYPE],
+        dependent_variables_required_values=[[constants.LINEAR_DECAY]],
+    )
+
+    _beta_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.TYPE,
+                key=constants.BETA_TYPE,
+                types=[str],
+                requirements=[
+                    lambda x: x
+                    in [
+                        constants.CONSTANT,
+                        constants.LINEAR_DECAY,
+                        constants.MAX_STD_OF_MEAN,
+                        constants.MEAN_STD_OF_MEAN,
+                        constants.MEAN_AVERAGE_KL,
+                        constants.MEAN_INFORMATION_RADIUS,
+                        constants.MEAN_MAX_KL,
+                    ]
+                ],
+            ),
+            config_field.Field(
+                name=constants.DEFAULT_BETA,
+                types=[int, float],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
+            config_field.Field(
+                name=constants.MINIMUM_BETA,
+                types=[float, int],
+                requirements=[lambda x: x >= 0 and x <= 1],
+            ),
+        ],
+        level=[constants.BETA],
+        nested_templates=[_constant_beta_template, _linear_decay_beta_template],
+    )
+
     _ucb_template = config_template.Template(
         fields=[
             config_field.Field(
@@ -286,6 +357,7 @@ class ConfigTemplate:
                             constants.UCB,
                             constants.DISCOUNTED_UCB,
                             constants.THOMPSON,
+                            constants.SOFTMAX,
                         ]
                     ],
                 ),
@@ -303,6 +375,7 @@ class ConfigTemplate:
                 self._rms_prop_template,
                 self._learning_rate_template,
                 self._epsilon_template,
+                self._beta_template,
                 self._ucb_template,
                 self._discounted_ucb_template,
             ],
