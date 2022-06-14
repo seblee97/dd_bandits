@@ -341,6 +341,8 @@ class ConfigTemplate:
                     requirements=[lambda x: x >= 0 or x <= 1],
                 ),
                 config_field.Field(name=constants.CHANGE_FREQ, types=[int]),
+                config_field.Field(name=constants.TEST_FREQUENCY, types=[int]),
+                config_field.Field(name=constants.NUM_TEST_SAMPLES, types=[int]),
                 config_field.Field(name=constants.BATCH_SIZE, types=[int]),
                 config_field.Field(name=constants.N_EPISODES, types=[int]),
                 config_field.Field(
