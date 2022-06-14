@@ -13,6 +13,8 @@ class Runner(base_runner.BaseRunner):
         self._n_ensemble = config.n_ensemble
         self._n_episodes = config.n_episodes
         self._change_freq = config.change_freq
+        self._test_frequency = config.test_frequency
+        self._num_test_samples = config.num_test_samples
         self._n_arms = config.n_arms
         self._p_bootstrap = config.p_bootstrap
         self._batch_size = config.batch_size
@@ -70,7 +72,13 @@ class Runner(base_runner.BaseRunner):
         return [
             column
             for column in list(self._data_columns.keys())
-            # if column in [constants.MEAN_OPTIMAL_REWARD, constants.REGRET]
+            if column
+            in [
+                constants.MEAN_OPTIMAL_REWARD,
+                constants.REGRET,
+                constants.TEST_REGRET,
+                constants.OPTIMAL_ACTION_SELECTION,
+            ]
         ]
 
     def _setup_data_columns(self):
@@ -82,6 +90,8 @@ class Runner(base_runner.BaseRunner):
             constants.REWARD,
             constants.MEAN_OPTIMAL_REWARD,
             constants.REGRET,
+            constants.OPTIMAL_ACTION_SELECTION,
+            constants.TEST_REGRET,
         ]
 
         for n_arm in range(self._n_arms):
@@ -235,6 +245,7 @@ class Runner(base_runner.BaseRunner):
                         self._data_index
                     ] = stds[n_arm]
                 self._trial(trial_index=trial_index, means=means, stds=stds)
+                self._test_trial(trial_index=trial_index, means=means, stds=stds)
                 self._step_count += 1
                 self._data_index += 1
 
@@ -268,7 +279,7 @@ class Runner(base_runner.BaseRunner):
 
         reward = np.mean(samples)
         self._action_selector.update(action, reward)
-        optimal_reward = self._batch_size * len(sampled_ind) * max(means)
+        optimal_reward = max(means)
 
         self._data_columns[constants.ACTION_SELECTED][self._data_index] = action
         self._data_columns[constants.LEARNING_RATE][self._data_index] = learning_rate
@@ -357,6 +368,35 @@ class Runner(base_runner.BaseRunner):
                 self._data_columns[
                     f"{constants.ENSEMBLE_STD}_{constants.ARM}_{n_arm}_{constants.HEAD}_{e}"
                 ][self._data_index] = e_std
+
+    def _test_trial(self, trial_index: int, means: List[float], stds: List[float]):
+
+        if trial_index % self._test_frequency == 0:
+            samples = [
+                eg.sample(num_samples=self._num_test_samples)
+                for eg in self._estimator_group
+            ]
+            test_actions = np.argmax(samples, axis=0)
+            action_counts = np.bincount(test_actions, minlength=self._n_arms)
+            test_reward = np.mean(
+                np.concatenate(
+                    [
+                        np.random.normal(
+                            loc=means[i], scale=stds[i] ** 2, size=action_counts[i]
+                        )
+                        for i in range(self._n_arms)
+                    ]
+                )
+            )
+
+            optimal_reward = max(means)
+
+            self._data_columns[constants.TEST_REGRET][self._data_index] = (
+                optimal_reward - test_reward
+            )
+            self._data_columns[constants.OPTIMAL_ACTION_SELECTION][self._data_index] = (
+                action_counts[np.argmax(means)] / self._num_test_samples
+            )
 
     def post_process(self):
         df = self._data_logger.load_data()
