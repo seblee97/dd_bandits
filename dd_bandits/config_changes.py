@@ -91,7 +91,7 @@ SOFTMAX_CONFIG_CHANGES = {
         {
             "optimiser": "sgd",
             "action_selection": "softmax",
-            "beta": {"type": "constants", "constant": {"value": beta}},
+            "beta": {"type": "constant", "constant": {"value": beta}},
             "learning_rate": {"type": "constant", "constant": {"value": lr}},
         }
     ]
