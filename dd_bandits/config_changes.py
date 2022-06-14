@@ -1,6 +1,7 @@
 import itertools
 
 eps_constants = [0.1, 0.5, 0.9]
+beta_constants = [1, 10, 100, 1000]
 lr_constants = [0.01, 0.1, 1]
 ucb_constants = [1, 10, 20, 50, 100, 1000]
 ducb_gammas = [0.8, 0.9, 0.95, 0.99]
@@ -85,8 +86,12 @@ DISCOUNTED_UCB_CONFIG_CHANGES = {
     )
 }
 
-CONFIG_CHANGES = {
-    **CONSTANT_CONFIG_CHANGES,
-    **ADAPTIVE_SGD_CONFIG_CHANGES,
-    **ADAPTIVE_RMS_CONFIG_CHANGES,
+SOFTMAX_CONFIG_CHANGES = {
+    f"softmax_{beta}_lr_{lr}": {
+        "optimiser": "sgd",
+        "action_selection": "softmax",
+        "beta": {"type": "constants", "constant": {"value": beta}},
+        "learning_rate": {"type": "constant", "constant": {"value": lr}},
+    }
+    for beta, lr in itertools.product(beta_constants, lr_constants)
 }
