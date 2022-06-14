@@ -46,6 +46,11 @@ class Estimator:
         #     pdb.set_trace()
         self._std_estimate = np.sqrt(np.exp(logvar))
 
+    def sample(self, num_samples: int):
+        return np.random.normal(
+            loc=self._mean_estimate, scale=self._std_estimate**2, size=num_samples
+        )
+
 
 class EstimatorGroup:
     def __init__(self, total_num_estimators: int, optimiser):
@@ -87,6 +92,10 @@ class EstimatorGroup:
         return samples
 
     @property
+    def estimators(self):
+        return self._estimators
+
+    @property
     def group_means(self):
         return [estimator.mean_estimate for estimator in self._estimators]
 
@@ -97,6 +106,9 @@ class EstimatorGroup:
     @property
     def mean_diffs(self):
         return self._mean_diffs
+
+    def sample(self, num_samples: int):
+        return np.mean([e.sample(num_samples) for e in self._estimators], axis=0)
 
 
 class SGD:
