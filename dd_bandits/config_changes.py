@@ -87,11 +87,13 @@ DISCOUNTED_UCB_CONFIG_CHANGES = {
 }
 
 SOFTMAX_CONFIG_CHANGES = {
-    f"softmax_{beta}_lr_{lr}": {
-        "optimiser": "sgd",
-        "action_selection": "softmax",
-        "beta": {"type": "constants", "constant": {"value": beta}},
-        "learning_rate": {"type": "constant", "constant": {"value": lr}},
-    }
+    f"softmax_{beta}_lr_{lr}": [
+        {
+            "optimiser": "sgd",
+            "action_selection": "softmax",
+            "beta": {"type": "constants", "constant": {"value": beta}},
+            "learning_rate": {"type": "constant", "constant": {"value": lr}},
+        }
+    ]
     for beta, lr in itertools.product(beta_constants, lr_constants)
 }
