@@ -270,10 +270,10 @@ class ConfigTemplate:
         dependent_variables=[constants.BETA_TYPE],
         dependent_variables_required_values=[
             [
-                constants.ACTION_MEAN_OF_STD,
-                constants.MEAN_MEAN_OF_STD,
                 constants.MEAN_STD_OF_MEAN,
-                constants.UNCERTAINTY_FRACTION,
+                constants.MEAN_MAX_KL,
+                constants.MEAN_AVERAGE_KL,
+                constants.MEAN_INFORMATION_RADIUS,
             ]
         ],
     )
