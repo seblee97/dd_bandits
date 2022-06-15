@@ -106,7 +106,7 @@ SOFTMAX_CONFIG_CHANGES = {
 }
 
 DD_EXPLORATION_CONFIG_CHANGES = {
-    f"doya_dayu_lr_{lr}": [
+    f"doya_dayu_{beta_type}_lr_{lr}": [
         {
             "optimiser": "sgd",
             "action_selection": "softmax",
