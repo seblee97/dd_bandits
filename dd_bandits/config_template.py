@@ -258,6 +258,26 @@ class ConfigTemplate:
         dependent_variables_required_values=[[constants.LINEAR_DECAY]],
     )
 
+    _modulate_beta_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.FACTOR,
+                types=[int, float],
+                key=f"{constants.BETA}_{constants.FACTOR}",
+            )
+        ],
+        level=[constants.BETA, constants.MODULATE],
+        dependent_variables=[constants.BETA_TYPE],
+        dependent_variables_required_values=[
+            [
+                constants.ACTION_MEAN_OF_STD,
+                constants.MEAN_MEAN_OF_STD,
+                constants.MEAN_STD_OF_MEAN,
+                constants.UNCERTAINTY_FRACTION,
+            ]
+        ],
+    )
+
     _beta_template = config_template.Template(
         fields=[
             config_field.Field(
@@ -280,16 +300,14 @@ class ConfigTemplate:
             config_field.Field(
                 name=constants.DEFAULT_BETA,
                 types=[int, float],
-                requirements=[lambda x: x >= 0 and x <= 1],
-            ),
-            config_field.Field(
-                name=constants.MINIMUM_BETA,
-                types=[float, int],
-                requirements=[lambda x: x >= 0 and x <= 1],
             ),
         ],
         level=[constants.BETA],
-        nested_templates=[_constant_beta_template, _linear_decay_beta_template],
+        nested_templates=[
+            _constant_beta_template,
+            _linear_decay_beta_template,
+            _modulate_beta_template,
+        ],
     )
 
     _ucb_template = config_template.Template(
