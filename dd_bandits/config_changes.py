@@ -7,6 +7,7 @@ ucb_constants = [1, 10, 20, 50, 100, 1000]
 ducb_gammas = [0.8, 0.9, 0.95, 0.99]
 ducb_eps = [0.25, 0.5, 0.75, 0.9]
 lr_modulations = [0.1, 0.05, 0.2]
+beta_modulations = [0.01, 0.1, 1, 10, 100]
 action_selections = ["ucb", "epsilon_greedy"]
 lr_types = ["mean_mean_of_std", "uncertainty_fraction", "linear_decay"]
 
@@ -106,15 +107,17 @@ SOFTMAX_CONFIG_CHANGES = {
 }
 
 DD_EXPLORATION_CONFIG_CHANGES = {
-    f"doya_dayu_{beta_type}_lr_{lr}": [
+    f"doya_dayu_{beta_type}_{beta_mod}_lr_{lr}": [
         {
             "optimiser": "sgd",
             "action_selection": "softmax",
-            "beta": {"type": beta_type},
+            "beta": {"type": beta_type, "modulate": {"factor": beta_mod}},
             "learning_rate": {"type": "constant", "constant": {"value": lr}},
         }
     ]
-    for beta_type, lr in itertools.product(beta_types, lr_constants)
+    for beta_type, beta_mod, lr in itertools.product(
+        beta_types, beta_modulations, lr_constants
+    )
 }
 
 CONFIG_CHANGES = {
