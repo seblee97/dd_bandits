@@ -17,6 +17,13 @@ eps_types = [
     "mean_information_radius",
 ]
 
+beta_types = [
+    "mean_std_of_mean",
+    "mean_max_kl",
+    "mean_average_kl",
+    "mean_information_radius",
+]
+
 CONSTANT_CONFIG_CHANGES = {
     f"lr_constant_{value_lr}_eps_constant_{value_eps}_{action_selection}": [
         {
