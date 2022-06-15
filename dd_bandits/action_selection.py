@@ -146,42 +146,32 @@ class Softmax(SelectAction):
         elif config.beta_type == constants.MAX_STD_OF_MEAN:
 
             def beta_fn():
-                computed_beta = np.min(
-                    [1, np.max(self._latest_metrics[constants.STD_OF_MEAN])]
-                )
-                return 1 / np.max([config.minimum_beta, computed_beta])
+                computed_beta = np.max(self._latest_metrics[constants.STD_OF_MEAN])
+                return config.beta_factor / computed_beta
 
         elif config.beta_type == constants.MEAN_STD_OF_MEAN:
 
             def beta_fn():
-                computed_beta = np.min(
-                    [1, np.mean(self._latest_metrics[constants.STD_OF_MEAN])]
-                )
-                return 1 / np.max([config.minimum_beta, computed_beta])
+                computed_beta = np.mean(self._latest_metrics[constants.STD_OF_MEAN])
+                return config.beta_factor / computed_beta
 
         elif config.beta_type == constants.MEAN_AVERAGE_KL:
 
             def beta_fn():
-                computed_beta = np.min(
-                    [1, np.mean(self._latest_metrics[constants.AVERAGE_KL])]
-                )
-                return 1 / np.max([config.minimum_beta, computed_beta])
+                computed_beta = np.mean(self._latest_metrics[constants.AVERAGE_KL])
+                return config.beta_factor / computed_beta
 
         elif config.beta_type == constants.MEAN_MAX_KL:
 
             def beta_fn():
-                computed_beta = np.min(
-                    [1, np.mean(self._latest_metrics[constants.MAX_KL])]
-                )
-                return 1 / np.max([config.minimum_beta, computed_beta])
+                computed_beta = np.mean(self._latest_metrics[constants.MAX_KL])
+                return config.beta_factor / computed_beta
 
         elif config.beta_type == constants.MEAN_INFORMATION_RADIUS:
 
             def beta_fn():
-                computed_beta = np.min(
-                    [1, np.mean(self._latest_metrics[constants.INF_RADIUS])]
-                )
-                return 1 / np.max([config.minimum_beta, computed_beta])
+                computed_beta = np.mean(self._latest_metrics[constants.INF_RADIUS])
+                return config.beta_factor / computed_beta
 
         return beta_fn
 
