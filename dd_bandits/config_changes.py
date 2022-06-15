@@ -111,7 +111,7 @@ DD_EXPLORATION_CONFIG_CHANGES = {
         {
             "optimiser": "sgd",
             "action_selection": "softmax",
-            "beta": {"type": beta_type, "modulate": {"beta_factor": beta_mod}},
+            "beta": {"type": beta_type, "modulate": {"factor": beta_mod}},
             "learning_rate": {"type": "constant", "constant": {"value": lr}},
         }
     ]
