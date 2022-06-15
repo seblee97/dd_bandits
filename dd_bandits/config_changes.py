@@ -104,3 +104,21 @@ SOFTMAX_CONFIG_CHANGES = {
     ]
     for beta, lr in itertools.product(beta_constants, lr_constants)
 }
+
+DD_EXPLORATION_CONFIG_CHANGES = {
+    f"doya_dayu_lr_{lr}": [
+        {
+            "optimiser": "sgd",
+            "action_selection": "softmax",
+            "beta": {"type": beta_type},
+            "learning_rate": {"type": "constant", "constant": {"value": lr}},
+        }
+    ]
+    for beta_type, lr in itertools.product(beta_types, lr_constants)
+}
+
+CONFIG_CHANGES = {
+    **CONSTANT_CONFIG_CHANGES,
+    **ADAPTIVE_SGD_CONFIG_CHANGES,
+    **ADAPTIVE_RMS_CONFIG_CHANGES,
+}
