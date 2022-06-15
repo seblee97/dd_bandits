@@ -57,7 +57,6 @@ epsilon:
 
 beta:
 
-    minimum_beta: 0
     default_beta: 0.2
 
     type: constant
@@ -69,6 +68,9 @@ beta:
         initial_beta: 1
         final_beta: 0.1
         beta_decay: 0.0001
+
+    modulate:
+        factor: 0.1
 
 ucb:
     ucb_constant: 10
