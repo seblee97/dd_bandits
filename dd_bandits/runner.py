@@ -21,18 +21,6 @@ class Runner(base_runner.BaseRunner):
         self._default_lr = config.default_lr
         self._default_epsilon = config.default_eps
 
-        self._latest_metrics = {
-            constants.TOTAL_ARM_REWARDS: np.zeros(self._n_arms),
-            constants.STD_OF_MEAN: np.zeros(self._n_arms),
-            constants.MEAN_OF_STD: np.zeros(self._n_arms),
-            constants.AVERAGE_KL: np.zeros(self._n_arms),
-            constants.MAX_KL: np.zeros(self._n_arms),
-            constants.INF_RADIUS: np.zeros(self._n_arms),
-            constants.ACTION_COUNTS: np.zeros(self._n_arms),
-            constants.ACTION_HISTORY: [[] for _ in range(self._n_arms)],
-            constants.REWARD_HISTORY: np.zeros(self._n_episodes * self._change_freq),
-        }
-
         self._step_count: int
         self._data_index: int
 
@@ -66,19 +54,39 @@ class Runner(base_runner.BaseRunner):
             for _ in range(config.n_arms)
         ]
 
+        self._latest_metrics = {
+            constants.TOTAL_ARM_REWARDS: np.zeros(self._n_arms),
+            constants.STD_OF_MEAN: np.zeros(self._n_arms),
+            constants.MEAN_OF_STD: np.zeros(self._n_arms),
+            constants.AVERAGE_KL: np.zeros(self._n_arms),
+            constants.MAX_KL: np.zeros(self._n_arms),
+            constants.INF_RADIUS: np.zeros(self._n_arms),
+            constants.ACTION_COUNTS: np.zeros(self._n_arms),
+            constants.ACTION_HISTORY: [[] for _ in range(self._n_arms)],
+            constants.REWARD_HISTORY: np.zeros(self._n_episodes * self._change_freq),
+        }
+
+        for n_arm in range(self._n_arms):
+            self._latest_metrics[constants.STD_OF_MEAN][n_arm] = np.std(
+                self._estimator_group[n_arm].group_means
+            )
+            self._latest_metrics[constants.MEAN_OF_STD][n_arm] = np.mean(
+                self._estimator_group[n_arm].group_stds
+            )
+
         super().__init__(config=config)
 
     def _get_data_columns(self):
         return [
             column
             for column in list(self._data_columns.keys())
-            if column
-            in [
-                constants.MEAN_OPTIMAL_REWARD,
-                constants.REGRET,
-                constants.TEST_REGRET,
-                constants.OPTIMAL_ACTION_SELECTION,
-            ]
+            # if column
+            # in [
+            #     constants.MEAN_OPTIMAL_REWARD,
+            #     constants.REGRET,
+            #     constants.TEST_REGRET,
+            #     constants.OPTIMAL_ACTION_SELECTION,
+            # ]
         ]
 
     def _setup_data_columns(self):
